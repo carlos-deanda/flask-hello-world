@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, request, jsonify, render_template
 import psycopg2
 from dotenv import load_dotenv
 import os
@@ -56,10 +56,10 @@ def insert_sensor_value(sensor_id):
 
         # Insert into sensors table
         cursor.execute(
-            "INSERT INTO sensors (sensor_id, value) VALUES (%s, %s)",
+            "INSERT INTO sensores (sensor_id, value) VALUES (%s, %s)",
             (sensor_id, value)
         )
-        conn.commit()
+        connection.commit()
 
         return jsonify({
             "message": "Sensor value inserted successfully",
