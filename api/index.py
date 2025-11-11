@@ -42,6 +42,11 @@ def sensor():
     except Exception as e:
         return(f"Failed to connect: {e}")
 
+@app.route('/pagina')
+def pagina():
+    return render_template("pagina.html")
+
+
 
 @app.route("/sensor/<int:sensor_id>", methods=["POST"])
 def insert_sensor_value(sensor_id):
