@@ -46,7 +46,9 @@ def sensor():
 def pagina():
     return render_template("pagina.html", user="Carlos")
 
-
+@app.route('/dashboard')
+def dashboard():
+    return 'Hello'
 
 @app.route("/sensor/<int:sensor_id>", methods=["POST"])
 def insert_sensor_value(sensor_id):
