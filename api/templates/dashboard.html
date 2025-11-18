@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard Dinámico</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        #chartContainer { margin-top: 20px; border: 1px solid #ccc; padding: 15px; border-radius: 8px; }
+        select { padding: 8px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Gráfica por Sensor</h1>
+
+        <label for="sensor-select">Selecciona un Sensor:</label>
+        <select id="sensor-select" onchange="loadSensorData()">
+            <option value="">-- Elige un Sensor --</option>
+            {% for id in sensor_ids %}
+                <option value="{{ id }}">Sensor ID: {{ id }}</option>
+            {% endfor %}
+        </select>
+        
+        <p id="loading-status" style="color: blue;"></p>
+
+        <div id="chartContainer">
+            <canvas id="sensorChart"></canvas>
+        </div>
+    </div>
+
+    <script>
+        let sensorChart;
+        
+        // La lógica inicial aquí es más simple ya que no cargamos el primer dato en Python
+        document.addEventListener('DOMContentLoaded', () => {
+            const selectElement = document.getElementById('sensor-select');
+            if (selectElement.options.length > 1) {
+                // Selecciona el primer sensor después del placeholder y carga sus datos
+                selectElement.selectedIndex = 1; 
+                loadSensorData();
+            } else {
+                 document.getElementById('loading-status').textContent = "No se encontraron sensores en la base de datos.";
+            }
+        });
+
+
+        function updateChart(sensorId, values, timestamps) {
+            const ctx = document.getElementById('sensorChart').getContext('2d');
+            if (sensorChart) { sensorChart.destroy(); }
+
+            sensorChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: timestamps, 
+                    datasets: [{
+                        label: `Valor del Sensor ID ${sensorId}`,
+                        data: values, 
+                        borderColor: 'rgb(75, 192, 192)',
+                        tension: 0.1,
+                        fill: false
+                    }]
+                },
+                options: { responsive: true }
+            });
+        }
+
+        function loadSensorData() {
+            const selectElement = document.getElementById('sensor-select');
+            const sensorId = selectElement.value;
+            const statusElement = document.getElementById('loading-status');
+
+            if (!sensorId) {
+                if (sensorChart) { sensorChart.destroy(); sensorChart = null; }
+                statusElement.textContent = "Selecciona un sensor para ver su gráfica.";
+                return;
+            }
+
+            statusElement.textContent = `Cargando datos para el Sensor ID ${sensorId}...`;
+
+            // Llama a tu ruta existente que debe devolver JSON: /sensor/<int:sensor_id>
+            fetch(`/sensor/${sensorId}`) 
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Error en la petición: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    updateChart(sensorId, data.values, data.timestamps);
+                    statusElement.textContent = `Gráfica actualizada para el Sensor ID ${sensorId}.`;
+                })
+                .catch(error => {
+                    console.error('Error al obtener los datos:', error);
+                    statusElement.textContent = `Fallo al cargar la gráfica: ${error.message}`;
+                });
+        }
+    </script>
+</body>
+</html>
